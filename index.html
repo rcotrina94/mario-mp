@@ -1,0 +1,255 @@
+﻿<!doctype html>
+<html lang="es" ng-app="App">
+<head>
+	<meta charset=utf-8 />
+	<title>Super Mario HTML5 Multiplayer</title>
+	<link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.6/lumen/bootstrap.min.css" rel="stylesheet" integrity="sha384-mvYjhBJXQ9VlNETV/xXShy849GsBHnKzVVudnMOcWUVM/6Nd2ksj8VNng5f8ylyX" crossorigin="anonymous">
+	<link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="assets/game/content/style.css">
+	<style type="text/css">
+		.radio-inline label {
+			cursor:pointer;
+		}
+		.radio-inline {
+			cursor:default;
+		}
+	</style>
+</head>
+<body ng-controller="mainCtrl" ng-cloak>
+	<div class="container">
+		<h1>Super Mario HTML5 Multiplayer</h1>
+	</div>
+	<div ng-show="id">
+		<div ng-show="STATE == LOBBY" class="container">
+			<div class="well">
+				¡Bienvenido! Para crear una sala y empezar a jugar da click en el botón <span class="btn-sm btn-primary">CREA UNA SALA</span>, si te han compartido en enlace, da click en <span class="btn-sm btn-link">TENGO UNA CLAVE</span> para ingresarla.
+			</div>
+			<button ng-click="STATE=CREATE" class="btn btn-primary btn-lg">CREA UNA SALA</button>
+			<button ng-click="STATE=JOIN" class="btn btn-link btn-sm">Tengo una clave</button>
+		</div>
+		<div ng-show="STATE == CREATE" class="container">
+			<h4>Copia ésta clave y compartela con tus amig@s para empezar a jugar</h4>
+			<div class="form-group">
+				<div class="col-sm-8" >
+					<span ng-bind="id" class="form-control input-lg"></span>
+				</div>
+				<div class="col-sm-4">
+					<button ng-click="STATE = CHARACTER_SELECT; CREATOR = true;" class="btn btn-lg btn-block btn-success">Ya copié, a jugar</button>
+				</div>
+			</div>
+		</div>
+		<div ng-show="STATE == JOIN" class="container">
+			<h4>¡Ingresa la clave para comenzar!</h4>
+			<div class="form-group">
+				<div class="col-sm-8" >
+					<input class="form-control input-lg" type="text" name="connect_to" ng-model="connect_to">
+				</div>
+				<div class="col-sm-4">
+					<button ng-click="connect()" class="btn btn-success btn-lg">¡A jugar!</button>
+				</div>
+			</div>
+		</div>
+
+		<div ng-show="STATE == CHARACTER_SELECT" class="container">
+			<h4>Selecciona un personaje</h4>
+			<div class="col-sm-12">
+				<h3>
+					<button ng-click="makeReady()" class="btn btn-danger pull-right">LISTO!</button>
+					Jugador Local
+				</h3>
+				<div class="well">
+					<div class="form form-inline">
+						<div class="form-group">
+							<div class="radio-inline">
+								<input ng-change="updateCharacter()" type="radio" name="character" id="mario" ng-model="character.type" value="mario"><label for="mario">Mario</label>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="radio-inline">
+								<input ng-change="updateCharacter()" type="radio" name="character" id="luigi" ng-model="character.type" value="luigi"><label for="luigi">Luigi</label>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-12">
+				<h3>Jugador Internet <span class="label label-danger" ng-show="external_ready">LISTO!</span></h3>
+				<div class="well">
+					<span ng-hide="external_character">Esperando conexión...</span>
+					<div ng-show="external_character" class="form form-inline">
+						<div class="form-group">
+							<div class="radio-inline">
+								<input ng-disabled="true" type="radio" name="external_character" id="mario" ng-model="external_character.type" value="mario"><label for="mario">Mario</label>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="radio-inline">
+								<input ng-disabled="true" type="radio" name="external_character" id="luigi" ng-model="external_character.type" value="luigi"><label for="luigi">Luigi</label>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+		<div ng-show="STATE == INGAME" class="container">
+			<div id="game">
+				<div id="world">
+				</div>
+				<div id="coinNumber" class="gauge">0</div>
+				<div id="coin" class="gaugeSprite"></div>
+				<div id="liveNumber" class="gauge">0</div>
+				<div id="live" class="gaugeSprite"></div>
+			</div>
+			<div id="instructions">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Acción</th>
+							<th>Jugador 1 (Mario)</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Mover Izquierda</td>
+							<td><kbd>←</kbd></td>
+						</tr>
+						<tr>
+							<td>Mover Derecha</td>
+							<td><kbd>→</kbd></td>
+						</tr>
+						<tr>
+							<td>Agacharse</td>
+							<td><kbd>↓</kbd></td>
+						</tr>
+						<tr>
+							<td>Saltar</td>
+							<td><kbd>↑</kbd></td>
+						</tr>
+						<tr>
+							<td>Correr/Disparar</td>
+							<td><kbd>A</kbd></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+	<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/0.3.14/peer.min.js"></script>
+
+	<!-- Game -->
+	<script src="assets/game/scripts/testlevels.js"></script>
+	<script src="assets/game/scripts/oop.js"></script>
+	<script src="assets/game/scripts/keys.js"></script>
+	<script src="assets/game/scripts/constants.js"></script>
+	<script src="assets/game/scripts/main.js"></script>
+
+
+	<script type="text/javascript" src="assets/js/connection.js"></script>
+	<script type="text/javascript">
+		var IS_CREATOR = false;
+		var EXTERNAL_KEYS = {
+			accelerate : false,
+			left : false,
+			up : false,
+			right : false,
+			down : false
+		};
+
+		var PLAYING = false;
+		var app = angular.module('App', [])
+			.controller('mainCtrl', [
+				'$scope',
+				function (self) {
+					self.LOBBY = 0;
+					self.CREATE = 1;
+					self.JOIN = 2;
+					self.INGAME = 3;
+					self.CHARACTER_SELECT = 4;
+					self.STATE = self.LOBBY;
+
+					self.external_character = false;
+					self.external_ready = false;
+					self.character = {
+						type: 'mario'
+					}
+					self.ready = false;
+
+					self.conn = new Connection({
+						atOpen: function(id){
+							self.id = id;
+						},
+						atConnection: function(){
+							self.external_character = true;
+							self.updateCharacter();
+						},
+						update: function(){
+							self.$apply();
+						},
+						updateKeys: function(keys){
+							EXTERNAL_KEYS = keys;
+						},
+						updateCharacter: function(char){
+							self.external_character = char;
+						},
+						updateReady: function(){
+							self.external_ready = true;
+							if (self.ready && self.external_ready){
+								self.play();
+							}
+						}
+					});
+					self.connect_to = "";
+					self.connect = function(){
+						self.STATE = self.CHARACTER_SELECT
+						self.conn.connect(self.connect_to);
+					};
+					self.updateCharacter = function(){
+						self.conn.sendCharacter(self.character);
+					};
+
+					self.makeReady = function(){
+						if (!self.ready) {
+							self.conn.sendReady();
+							self.ready = true;
+						}
+
+						if (self.ready && self.external_ready){
+							self.play();
+						} else {
+							self.conn.sendReady();
+						}
+					}
+					/*
+					 * -------------------------------------------
+					 * DOCUMENT READY STARTUP METHOD
+					 * -------------------------------------------
+					 */
+					self.play = function() {
+						if (!PLAYING){
+							PLAYING = true;
+							self.STATE = self.INGAME;
+							IS_CREATOR = self.CREATOR;
+							if (self.character.type == 'mario'){
+								genLuigi(false);
+								genMario(true);
+							} else {
+								genMario(false);
+								genLuigi(true);
+							}
+
+							var level = new Level('world');
+							level.load(definedLevels[0]);
+							level.start();
+							keys.handleExternal(self.conn);
+							keys.bind();
+						}
+					};
+				}
+			])
+	</script>
+</body>
+</html>
